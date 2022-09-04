@@ -1,0 +1,372 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta property="og:title" content="">
+  <meta property="og:type" content="">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="">
+
+  <!--  <link rel="manifest" href="site.webmanifest">-->
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Place favicon.ico in the root directory -->
+
+  <!--  <link rel="stylesheet" href="css/normalize.css">-->
+  <!--  <link rel="stylesheet" href="css/main.css">-->
+
+  <meta name="theme-color" content="#fafafa">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+  <style type="text/css">
+    .tabtop13 td {
+      background-color: #ffffff;
+      height: 25px;
+      line-height: 100%;
+    }
+
+    .btbg {
+      background: #e9faff !important;
+    }
+
+    .black_overlay {
+      display: none; /* 此元素不会被显示*/
+      position: absolute;
+      top: 0%;
+      left: 0%;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      z-index: 1001; /* z-index 属性设置元素的堆叠顺序。拥有更高堆叠顺序的元素总是会处于堆叠顺序较低的元素的前面。*/
+      -moz-opacity: 0.8;
+      opacity: .80; /* opacity 属性设置元素的不透明级别。*/
+      filter: alpha(opacity=88);
+      /* 所有浏览器都支持 opacity 属性。   注释：IE8 以及更早的版本支持替代的 filter 属性。例如：filter:Alpha(opacity=50)。*/
+    }
+
+    .white_content {
+      display: none;
+      position: absolute;
+      top: 25%;
+      left: 25%;
+      width: 55%;
+      height: 55%;
+      padding: 20px;
+      border: 10px solid orange;
+      background-color: white;
+      z-index: 1002;
+      overflow: auto;
+    }
+
+    .el-dialog__headerbtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .is-selected {
+      color: #1989FA;
+    }
+  </style>
+</head>
+
+<body>
+
+<!--<div id="app">-->
+<!--  <p>-->
+<!--    <input list="browsers" v-model="message"><br/>-->
+<!--    消息：{{ message }}<br/>-->
+<!--    消息取反：{{ reversedMessage }}-->
+<!--  </p>-->
+<!--</div>-->
+<!--</body>-->
+
+<!--<ul id="ul">-->
+<!--  <li v-for="item in items" :key="item.id" @click="add1(item)">{{item.message}}</li>-->
+<!--</ul>-->
+
+
+<div id="fq" style="width:600px">
+  <el-calendar v-model="day" :range="range1">
+    <template
+      slot="dateCell"
+      slot-scope="{date, data}">
+      <p :class="data.isSelected ? 'is-selected' : ''" @click="changeCalendar(data,date)">
+        {{ data.day.split('-').slice(1).join('-') }} {{ data.isSelected ? '✔️' : ''}}
+      </p>
+    </template>
+  </el-calendar>
+  任务列表
+  <table height="600px" width="600px" border="0" cellspacing="1" cellpadding="1" bgcolor="#cccccc" class="tabtop13">
+    <tr v-for="(row,rowNum) in taskTable">
+      <td v-for="(col,colNum) in row.task"  style="width:300px" @click="currentRowNum=rowNum,currentColNum=colNum,dialogFormVisible = true"
+          style="height: 50%">
+        <!--        {{rowNum+1}},{{colNum+1}},-->
+        <div style="height: 90%;overflow-y: scroll">
+          <ul>
+            <li v-for="(task,index) in col.taskList" :key="(rowNum)*10+colNum+''+index">{{task}}</li>
+          </ul>
+        </div>
+      </td>
+    </tr>
+  </table>
+  <el-dialog title="添加任务" :visible.sync="dialogFormVisible">
+    <el-form :model="form">
+      <el-form-item label="任务内容" :label-width="formLabelWidth">
+        <el-input v-model="form.taskName" autocomplete="off" placeholder="任务内容"></el-input>
+      </el-form-item>
+    </el-form>
+    <div slot="footer" class="dialog-footer">
+      <el-button @click="dialogFormVisible = false">取 消</el-button>
+      <el-button type="primary" @click="dialogFormVisible = false,addTask(currentRowNum,currentColNum)">确 定</el-button>
+    </div>
+  </el-dialog>
+</div>
+</body>
+<script type="text/javascript">
+  Vue.component('tableC', {
+    data: function () {
+      return {
+        rowNums: 6,
+        colNums: 3
+      }
+    },
+    template: '<textarea>内容：{{mes}}</textarea>'
+  });
+  var vm = new Vue({
+    el: "#fq",
+    data: function () {
+      return {
+        rowNums: 2,
+        colNums: 2,
+        day: new Date(),
+        taskTable: this.getTaskList(this.day, 1),
+        dialogFormVisible: false,
+        form: {
+          taskName: ''
+        },
+        formLabelWidth: '120px',
+        currentRowNum: 0,
+        currentColNum: 0,
+        start: '2022-08-29',
+        end: '2022-09-04',
+        // range: [start.toString(), end.toString()],
+        range: ['2022-08-29', '2022-09-04'],
+        range1: ['2022-08-29', '2022-09-04'],
+        // map: new Map()
+      }
+    },
+    watch: {
+      day: function (newValue, oldValue) {
+        // console.log(newValue, oldValue);
+        // 更新数据 newValue
+        this.taskTable = this.getTaskList(newValue, 0);
+      }
+    },
+
+    computed: {
+      // 计算属性的 getter
+      reversedMessage: function () {
+        // `this` 指向 vm 实例
+        return this.message.split('').reverse().join('')
+      }
+    },
+    methods: {
+      getTaskList: function (date, num) {
+        if (num === 1) {
+          localStorage.clear();
+        }
+        if (date === undefined)
+          date = new Date();
+        // console.log(date);
+        let dateStr = this.dateToStr(date);
+        let item = JSON.parse(localStorage.getItem("taskInfo"));
+        // console.log("taskInfo===========");
+        // console.log(item);
+
+        if (item == null) {
+          return [{
+            "task": [{"taskList": []}, {"taskList": []}]
+          }, {
+            "task": [{"taskList": []}, {"taskList": []}]
+          }
+          ];
+        }
+        // console.log("taskList===========");
+        // console.log(item[dateStr]);
+        if (item[dateStr] == null || item[dateStr] === undefined) {
+          return [{
+            "task": [{"taskList": []}, {"taskList": []}]
+          }, {
+            "task": [{"taskList": []}, {"taskList": []}]
+          }
+          ];
+          // let s = JSON.stringify([{
+          //   "task": [{"taskList": []}, {"taskList": []}]
+          // }, {
+          //   "task": [{"taskList": []}, {"taskList": []}]
+          // }
+          // ]);
+          // item[dateStr] = s;
+          // console.log(item);
+          // console.log(item[dateStr]);
+          // console.log('JSON.stringify(item)');
+          //
+          // console.log(JSON.stringify(item));
+          // localStorage.setItem("taskInfo", JSON.stringify(item));
+
+        }
+        // var item1 = localStorage.getItem("taskInfo");
+        // var parseElement = JSON.parse(item1)[dateStr];
+
+        return item[dateStr];
+
+      },
+      addTask: function (rowNum, colNum) {
+        // this.taskTable[rowNum].task[colNum].taskList.push(this.form.taskName);
+        var item = localStorage.getItem("taskInfo");
+        if (item == null) {
+          item = "{}";
+        }
+        let parse = JSON.parse(item);
+        var dateToStr = this.dateToStr(this.day);
+        if (parse[dateToStr] == null) {
+          parse[dateToStr] = [{
+            "task": [{"taskList": []}, {"taskList": []}]
+          }, {
+            "task": [{"taskList": []}, {"taskList": []}]
+          }
+          ]
+        }
+        parse[dateToStr][rowNum].task[colNum].taskList.push(this.form.taskName);
+
+        localStorage.setItem("taskInfo", JSON.stringify(parse))
+        this.taskTable = this.getTaskList(this.day, 0);
+        this.form.taskName = '';
+      },
+      dateToStr: function (date) {
+        var year = date.getFullYear();
+        var month = (date.getMonth() + 1).toString();
+        var day = (date.getDate()).toString();
+        if (month.length === 1) {
+          month = "0" + month;
+        }
+        if (day.length === 1) {
+          day = "0" + day;
+        }
+        dateTime = year + "-" + month + "-" + day;
+        return dateTime;
+      },
+      changeCalendar: function (data, date1) {
+        // this.day = data.day;
+        // this.start = data.day.split('-').slice(1).join('-');
+        // this.end = data.day.split('-').slice(1).join('-');
+        // console.log(this.day, this.start, this.end);
+
+
+        let dayIndex = date1.getDay();
+        if (dayIndex === 0) {
+          dayIndex = 7;
+        }
+        // console.log(dayIndex);
+
+        let time = date1.getTime();
+        let oneDaymm = 3600 * 24 * 1000;
+        let gap = 0;
+        if (dayIndex === 1) {
+          gap = -7;
+        }
+        if (dayIndex === 7) {
+          gap = 7
+        }
+        let startTime = time + oneDaymm * (-dayIndex + 1 + gap);
+        let endTime = time + oneDaymm * (7 - dayIndex + gap);
+        // this.range1 = [data.day, data.day];
+        let data1 = this.dateToStr(new Date(startTime));
+        let data2 = this.dateToStr(new Date(endTime));
+        this.range1 = [data1, data2];
+      },
+
+      addRow: function (item) {
+        this.rowNums++;
+      },
+      addCol: function (item) {
+        this.colNums++;
+      }
+
+    }
+  });
+  // var vm = new Vue({
+  //   el: "#table",
+  //   data: {
+  //     items: [
+  //       {id: 1, message: "123"},
+  //       {id: 2, message: "1234"}
+  //     ]
+  //   },
+  //   computed: {
+  //     // 计算属性的 getter
+  //     reversedMessage: function () {
+  //       // `this` 指向 vm 实例
+  //       return this.message.split('').reverse().join('')
+  //     }
+  //   },
+  //   methods: {
+  //     add1: function (item) {
+  //       for (let i = 0; i < this.items.length; i++) {
+  //         item.message += "id";
+  //       }
+  //     }
+  //   }
+  // });
+
+
+  // var vm = new Vue({
+  //   el: "#ul",
+  //   data: {
+  //     items: [
+  //       {id: 1, message: "123"},
+  //       {id: 2, message: "1234"}
+  //     ]
+  //   },
+  //   computed: {
+  //     // 计算属性的 getter
+  //     reversedMessage: function () {
+  //       // `this` 指向 vm 实例
+  //       return this.message.split('').reverse().join('')
+  //     }
+  //   },
+  //   methods: {
+  //     add1: function (item) {
+  //       for (let i = 0; i < this.items.length; i++) {
+  //         item.message += "id";
+  //       }
+  //     }
+  //   }
+  // });
+  //
+  // var vm = new Vue({
+  //   el: "#app",
+  //   data: {
+  //     message: "123"
+  //   },
+  //   computed: {
+  //     // 计算属性的 getter
+  //     reversedMessage: function () {
+  //       // `this` 指向 vm 实例
+  //       return this.message.split('').reverse().join('')
+  //     }
+  //   }
+  // });
+
+</script>
+
+</html>
